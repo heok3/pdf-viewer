@@ -1,7 +1,11 @@
 module.exports = {
-  content: [],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
+    content: [
+        './storage/framework/views/*.php',
+        './resources/**/*.blade.php',
+        './resources/**/*.js',
+    ],
+    theme: {
+        extend: {},
+    },
+    plugins: [],
 }
