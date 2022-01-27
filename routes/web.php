@@ -13,9 +13,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('home');
-});
+Route::namespace('App\Http\Infrastructure\WebPage')
+    ->group(function () {
+        Route::get('/', 'HomeController');
+    });
 
 Route::namespace('App\Http\Infrastructure\API')
     ->prefix('api')

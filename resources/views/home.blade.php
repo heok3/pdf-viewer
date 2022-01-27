@@ -39,6 +39,11 @@
                             <span>Delete</span></button>
                     </div>
                 </div>
+                <ul>
+                    @foreach($pdfList as $pdf)
+                        <li class="border-b-2 p-2 text-lg hover:cursor-pointer hover:bg-gray-500 hover:text-gray-200">{{$pdf->original_file_name . '.pdf'}}</li>
+                    @endforeach
+                </ul>
             </div>
         </div>
     </div>

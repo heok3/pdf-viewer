@@ -15,7 +15,7 @@ class PdfFileFactory extends Factory
     public function definition()
     {
         return [
-            'original_file_name' => $this->faker->word() . '.pdf',
+            'original_file_name' => $this->faker->word(),
             'unique_file_name' => Str::uuid()->toString(),
         ];
     }
