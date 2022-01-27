@@ -16,3 +16,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('home');
 });
+
+Route::namespace('App\Http\Infrastructure\API')
+    ->prefix('api')
+    ->group(function () {
+        Route::get('/pdfs', 'PdfFileController@index');
+    });
