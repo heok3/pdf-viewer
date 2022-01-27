@@ -1,13 +1,15 @@
 <div id="pdf-view" class="flex-1 flex flex-col border-2">
     <div id="control-buttons" class="flex-none flex justify-between p-0.5 border-b-2">
         <div>
-            <button id="{{'zoom-in-' . $index}}" type="button" class="border-2 w-8 h-8 hover:border-4"><span>&#10010;</span></button>
-            <button id="{{'zoom-out-' . $index}}" type="button" class="border-2 w-8 h-8 rotate-90 hover:border-4"><span>&#10073;</span></button>
+            <button id="{{'zoom-in-' . $index}}" type="button" class="border-2 w-8 h-8 hover:border-4">
+                <span>&#10010;</span></button>
+            <button id="{{'zoom-out-' . $index}}" type="button" class="border-2 w-8 h-8 rotate-90 hover:border-4"><span>&#10073;</span>
+            </button>
         </div>
         <div>
             <button id="{{'prev-' . $index}}" type="button" class="border-2 h-8 hover:border-4">prev</button>
             <button id="{{'next-' . $index}}" type="button" class="border-2 h-8 hover:border-4">next</button>
-            <label>
+            <form id="{{'page_num_form-' . $index}}" class="inline-block">
                 Page:
                 <input
                     id="{{'page_num-' . $index}}"
@@ -15,9 +17,8 @@
                     step="1"
                     class="w-12"
                     min="1"
-                    onChange="renderPage(parseInt(this.value))"
                 /> / <span id="{{'page_count-' . $index}}"></span>
-            </label>
+            </form>
         </div>
     </div>
     <div id="{{'pdf-screen-' . $index}}"
@@ -28,16 +29,173 @@
 <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
 <script>
     {
-        const MIN_SCALE = 0.25;
-        const MAX_SCALE = 4;
-        const SCALE_STEP = 2;
+        class PdfModule {
+            MIN_SCALE = 0.25;
+            MAX_SCALE = 4;
+            SCALE_STEP = 2;
+
+            constructor(
+                url,
+                pdfjsLib,
+                pdfDoc,
+                pageNum,
+                pageRendering,
+                pageNumPending,
+                scale,
+                canvas,
+                ctx,
+                screenElement,
+                pageNumElement,
+            ) {
+                this.url = url
+                this.pdfjsLib = pdfjsLib;
+                this.pdfDoc = pdfDoc;
+                this.pageNum = pageNum;
+                this.pageRendering = pageRendering;
+                this.pageNumPending = pageNumPending;
+                this.scale = scale;
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.screenElement = screenElement;
+                this.pageNumElement = pageNumElement;
+            }
+
+            /**
+             * Get page info from document, resize canvas accordingly, and render page.
+             * @param num Page number.
+             */
+            renderPage = (num) => {
+                this.pageRendering = true;
+                // Using promise to fetch the page
+                this.pdfDoc.getPage(num).then(
+                    (function (currentObject) {
+                        return function (page) {
+                            let containerWidth = currentObject.screenElement.clientWidth;
+                            let containerHeight = currentObject.screenElement.clientHeight;
+                            let viewport = page.getViewport({scale: 1,});
+                            let widthScale = containerWidth / viewport.width;
+                            let heightScale = containerHeight / viewport.height;
+                            let scaledViewport = page.getViewport({scale: widthScale * currentObject.scale,});
+                            if (widthScale > heightScale) {
+                                scaledViewport = page.getViewport({scale: heightScale * currentObject.scale,});
+                            }
+
+                            // Prepare canvas using PDF page dimensions
+                            currentObject.canvas.height = scaledViewport.height;
+                            currentObject.canvas.width = scaledViewport.width;
+
+                            // Render PDF page into canvas context
+                            let renderContext = {
+                                canvasContext: currentObject.ctx,
+                                viewport: scaledViewport
+                            };
+                            let renderTask = page.render(renderContext);
+
+                            // Wait for rendering to finish
+                            renderTask.promise.then(
+                                (function (currentObject) {
+                                    return function () {
+                                        currentObject.pageRendering = false;
+                                        if (currentObject.pageNumPending !== null) {
+                                            // New page rendering is pending
+                                            currentObject.renderPage(currentObject.pageNumPending);
+                                            currentObject.pageNumPending = null;
+                                        }
+                                    };
+                                })(currentObject)
+                            );
+
+                        }
+                    })(this)
+                );
+                // Update page counters
+                pageNumElement.value = num;
+            }
+
+            /**
+             * If another page rendering in progress, waits until the rendering is
+             * finised. Otherwise, executes rendering immediately.
+             */
+            queueRenderPage = (num) => {
+                if (this.pageRendering) {
+                    this.pageNumPending = num;
+                } else {
+                    this.renderPage(num);
+                }
+            }
+
+            /**
+             * Displays previous page.
+             */
+            onPrevPage = e => {
+                if (this.pageNum <= 1) {
+                    alert('This is the first page.');
+                    return;
+                }
+                this.pageNum--;
+                this.queueRenderPage(this.pageNum);
+            }
+
+            /**
+             * Displays next page.
+             */
+            onNextPage = e => {
+                if (this.pageNum >= this.pdfDoc.numPages) {
+                    alert('This is the last page.');
+                    return;
+                }
+                this.pageNum++;
+                this.queueRenderPage(this.pageNum);
+            }
+
+            onZoomIn = e => {
+                if (this.scale >= this.MAX_SCALE) {
+                    alert('This is the biggest view.');
+                    return;
+                }
+
+                this.scale = this.scale * this.SCALE_STEP;
+                this.queueRenderPage(this.pageNum);
+            }
+
+            onZoomOut = e => {
+                if (this.scale <= this.MIN_SCALE) {
+                    alert('This is the smallest view.');
+                    return;
+                }
+
+                this.scale = this.scale / this.SCALE_STEP;
+                this.queueRenderPage(this.pageNum);
+            }
+
+            setCanvasContainerSize = e => {
+                let element = this.screenElement;
+                let fixedWidth = element.clientWidth;
+                let fixedHeight = element.clientHeight;
+                element.style.height = fixedHeight.toString() + "px";
+                element.style.width = fixedWidth.toString() + "px";
+                this.screenElement.classList.remove("flex-1");
+            }
+
+            onPageNumberInput = (event) => {
+                event.preventDefault();
+                let pageNum = parseInt(this.pageNumElement.value);
+                if (pageNum) {
+                    pdfModule.renderPage(parseInt(this.pageNumElement.value));
+                    this.pageNum = pageNum;
+                    return;
+                }
+
+                alert(`Please enter page from 1 to ${this.pdfDoc.numPages}`);
+            }
+        }
 
         // If absolute URL from the remote server is provided, configure the CORS
         // header on that server.
-        var url = 'https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf';
+        let url = 'https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf';
 
         // Loaded via <script> tag, create shortcut to access PDF.js exports.
-        var pdfjsLib = window['pdfjs-dist/build/pdf'];
+        let pdfjsLib = window['pdfjs-dist/build/pdf'];
 
         // The workerSrc property shall be specified.
         pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
@@ -50,131 +208,31 @@
             canvas = document.getElementById('{{'pdf-canvas-' . $index}}'),
             ctx = canvas.getContext('2d');
 
-        /**
-         * Get page info from document, resize canvas accordingly, and render page.
-         * @param num Page number.
-         */
-        function renderPage(num) {
-            pageRendering = true;
-            // Using promise to fetch the page
-            pdfDoc.getPage(num).then(function (page) {
-                let desiredWidth = document.getElementById('{{'pdf-screen-' . $index}}').clientWidth;
-                let desiredHeight = document.getElementById('{{'pdf-screen-' . $index}}').clientHeight;
-                let viewport = page.getViewport({scale: 1,});
-                let widthScale = desiredWidth / viewport.width;
-                let heightScale = desiredHeight / viewport.height;
-                let scaledViewport = page.getViewport({scale: widthScale * scale,});
-                if (widthScale > heightScale) {
-                    scaledViewport = page.getViewport({scale: heightScale * scale,});
-                }
+        let screenElement = document.getElementById('{{'pdf-screen-' . $index}}');
+        let pageNumElement = document.getElementById('{{'page_num-' . $index}}');
 
-                // Prepare canvas using PDF page dimensions
-                canvas.height = scaledViewport.height;
-                canvas.width = scaledViewport.width;
+        let pdfModule = new PdfModule(
+            url, pdfjsLib, pdfDoc, pageNum, pageRendering, pageNumPending,
+            scale, canvas, ctx, screenElement, pageNumElement,
+        );
 
-                // Render PDF page into canvas context
-                let renderContext = {
-                    canvasContext: ctx,
-                    viewport: scaledViewport
-                };
-                let renderTask = page.render(renderContext);
-
-                // Wait for rendering to finish
-                renderTask.promise.then(function () {
-                    pageRendering = false;
-                    if (pageNumPending !== null) {
-                        // New page rendering is pending
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
-                    }
-                });
-
-            });
-
-            // Update page counters
-            document.getElementById('{{'page_num-' . $index}}').value = num;
-        }
-
-        /**
-         * If another page rendering in progress, waits until the rendering is
-         * finised. Otherwise, executes rendering immediately.
-         */
-        function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
-        }
-
-        /**
-         * Displays previous page.
-         */
-        function onPrevPage() {
-            if (pageNum <= 1) {
-                return;
-            }
-            pageNum--;
-            queueRenderPage(pageNum);
-        }
-
-        document.getElementById('{{'prev-' . $index}}').addEventListener('click', onPrevPage);
-
-        /**
-         * Displays next page.
-         */
-        function onNextPage() {
-            if (pageNum >= pdfDoc.numPages) {
-                return;
-            }
-            pageNum++;
-            queueRenderPage(pageNum);
-        }
-
-        document.getElementById('{{'next-' . $index}}').addEventListener('click', onNextPage);
-
-        function onZoomIn() {
-            if(scale >= MAX_SCALE) {
-                return;
-            }
-
-            scale = scale * SCALE_STEP;
-            queueRenderPage(pageNum);
-        }
-
-        document.getElementById('{{'zoom-in-' . $index}}').addEventListener('click', onZoomIn);
-
-        function onZoomOut() {
-            if(scale <= MIN_SCALE) {
-                return;
-            }
-
-            scale = scale / SCALE_STEP;
-            queueRenderPage(pageNum);
-        }
-
-        document.getElementById('{{'zoom-out-' . $index}}').addEventListener('click', onZoomOut);
+        document.getElementById('{{'prev-' . $index}}').addEventListener('click', pdfModule.onPrevPage);
+        document.getElementById('{{'next-' . $index}}').addEventListener('click', pdfModule.onNextPage);
+        document.getElementById('{{'zoom-in-' . $index}}').addEventListener('click', pdfModule.onZoomIn);
+        document.getElementById('{{'zoom-out-' . $index}}').addEventListener('click', pdfModule.onZoomOut);
+        document.getElementById('{{'page_num_form-' . $index}}').addEventListener('submit', pdfModule.onPageNumberInput);
 
         /**
          * Asynchronously downloads PDF.
          */
         pdfjsLib.getDocument(url).promise.then(function (pdfDoc_) {
-            pdfDoc = pdfDoc_;
-            document.getElementById('{{'page_count-' . $index}}').textContent = pdfDoc.numPages;
-            document.getElementById('{{'page_num-' . $index}}').max = pdfDoc.numPages;
+            pdfModule.pdfDoc = pdfDoc_;
+            document.getElementById('{{'page_count-' . $index}}').textContent = pdfModule.pdfDoc.numPages;
+            pageNumElement.max = pdfModule.pdfDoc.numPages;
 
             // Initial/first page rendering
-            renderPage(pageNum);
-            setCanvasContainerSize();
+            pdfModule.renderPage(pageNum);
+            pdfModule.setCanvasContainerSize();
         });
-
-        function setCanvasContainerSize() {
-            let element = document.getElementById('{{'pdf-screen-' . $index}}');
-            let fixedWidth = element.clientWidth;
-            let fixedHeight = element.clientHeight;
-            element.style.height = fixedHeight.toString() + "px";
-            element.style.width = fixedWidth.toString() + "px";
-            document.getElementById('{{'pdf-screen-' . $index}}').classList.remove("flex-1");
-        }
     }
 </script>
