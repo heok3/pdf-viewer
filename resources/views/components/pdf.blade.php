@@ -221,6 +221,7 @@
         document.getElementById('{{'zoom-in-' . $index}}').addEventListener('click', pdfModule.onZoomIn);
         document.getElementById('{{'zoom-out-' . $index}}').addEventListener('click', pdfModule.onZoomOut);
         document.getElementById('{{'page_num_form-' . $index}}').addEventListener('submit', pdfModule.onPageNumberInput);
+        document.getElementById('{{'page_num_form-' . $index}}').addEventListener('change', pdfModule.onPageNumberInput);
 
         /**
          * Asynchronously downloads PDF.
