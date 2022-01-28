@@ -26,26 +26,54 @@
         </div>
         <div class="flex flex-1">
             <div class="flex-1 flex flex-col border-2">
-                @include('components.pdf', ['index' => 1])
-                @include('components.pdf', ['index' => 2])
+                @foreach($selectedPdfIds as $selectedId)
+                    @include('components.pdf', [
+                        'index' => $selectedId,
+                        'pdf' => $pdfList->find($selectedId),
+                    ])
+                @endforeach
             </div>
-            <div id="pdf-list" class="w-48 border-2">
-                <div class="flex justify-between items-center pl-1 border-b-2">
+            <div id="pdf-list" class="flex flex-col w-1/4 border-2">
+                <div class="flex flex-none justify-between items-center pl-1 border-b-2">
                     <div>
                         <span>PDF list</span>
                     </div>
                     <div class="flex">
-                        <button type="button" class="border-2 p-1 hover:bg-gray-200 hover:cursor-pointer">
-                            <span>Add</span></button>
-                        <button type="button" class="border-2 p-1 hover:bg-gray-200 hover:cursor-pointer">
-                            <span>Delete</span></button>
+                        <form id="form_open" method="GET" action="/" class="hidden"></form>
+                        <button
+                            id="open"
+                            type="submit"
+                            form="form_open"
+                            class="border-2 p-1 hover:bg-gray-200 hover:cursor-pointer"
+                        > OPEN</button>
+                        <form id="form_upload" method="POST" action="/todo" class="hidden">
+                            <input type="file" name="pdf_file" required accept="application/pdf"/>
+                        </form>
+                        <button
+                            id="upload"
+                            type="submit"
+                            form="form_upload"
+                            class="border-2 p-1 hover:bg-gray-200 hover:cursor-pointer"
+                        > UPLOAD</button>
                     </div>
                 </div>
-                <ul>
-                    @foreach($pdfList as $pdf)
-                        <li class="border-b-2 p-2 text-lg hover:cursor-pointer hover:bg-gray-500 hover:text-gray-200">{{$pdf->original_file_name . '.pdf'}}</li>
-                    @endforeach
-                </ul>
+                <div class="flex flex-col flex-1">
+                    <p
+                        class="flex-none text-center text-gray-200 bg-indigo-400 border-b-2 border-gray-200"
+                    >Multiple selection: ctrl + left click</p>
+                    <div class="flex-1">
+                        <select name="pdf_files[]" form="form_open"
+                            class="h-full w-full" size="1" multiple="multiple">
+                            @foreach($pdfList as $pdf)
+                                <option
+                                    class="border-b-2 p-2 text-lg hover:cursor-pointer hover:bg-gray-500 hover:text-gray-200"
+                                    value="{{$pdf->id}}"
+                                    {{in_array($pdf->id, $selectedPdfIds) ? 'selected' : ''}}
+                                >{{$pdf->original_file_name . '.pdf'}}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

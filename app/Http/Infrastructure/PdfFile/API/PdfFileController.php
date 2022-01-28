@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Infrastructure\API;
+namespace App\Http\Infrastructure\PdfFile\API;
 
-use App\Http\Application\ListPdfFile;
+use App\Http\Application\PdfFile\ListPdfFile;
 use Illuminate\Routing\Controller;
 
 class PdfFileController extends Controller

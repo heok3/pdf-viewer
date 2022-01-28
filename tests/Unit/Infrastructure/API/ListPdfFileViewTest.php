@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Infrastructure\API;
 
-use App\Http\Infrastructure\API\ListPdfFileView;
+use App\Http\Infrastructure\PdfFile\API\ListPdfFileView;
 use App\Models\PdfFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;

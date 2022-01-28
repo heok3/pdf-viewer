@@ -1,11 +1,12 @@
 <div id="pdf-view" class="flex-1 flex flex-col border-2">
-    <div id="control-buttons" class="flex-none flex justify-between p-0.5 border-b-2">
+    <div id="control-buttons" class="flex-none flex justify-between items-center p-0.5 border-b-2">
         <div>
             <button id="{{'zoom-in-' . $index}}" type="button" class="border-2 w-8 h-8 hover:border-4">
                 <span>&#10010;</span></button>
             <button id="{{'zoom-out-' . $index}}" type="button" class="border-2 w-8 h-8 rotate-90 hover:border-4"><span>&#10073;</span>
             </button>
         </div>
+        <div class="font-bold text-xl">{{$pdf->original_file_name}}</div>
         <div>
             <button id="{{'prev-' . $index}}" type="button" class="border-2 h-8 hover:border-4">prev</button>
             <button id="{{'next-' . $index}}" type="button" class="border-2 h-8 hover:border-4">next</button>
@@ -192,7 +193,7 @@
 
         // If absolute URL from the remote server is provided, configure the CORS
         // header on that server.
-        let url = 'https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf';
+        let url = '{{asset('storage/' . $pdf->unique_file_name . '.pdf')}}';
 
         // Loaded via <script> tag, create shortcut to access PDF.js exports.
         let pdfjsLib = window['pdfjs-dist/build/pdf'];

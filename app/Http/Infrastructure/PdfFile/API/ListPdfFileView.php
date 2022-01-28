@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Infrastructure\API;
+namespace App\Http\Infrastructure\PdfFile\API;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
