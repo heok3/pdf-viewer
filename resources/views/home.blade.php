@@ -9,14 +9,16 @@
     <title>Pdf multi view</title>
 
     <style>
-        #the-canvas {
-            border: 1px solid black;
-            direction: ltr;
+        #print { display: none; }
+        @media print {
+            #print { display: block; }
+            #no-print { display: none; }
         }
     </style>
 </head>
-<body>
-<div class="container flex flex-col mx-auto h-screen">
+<body id="body">
+<div id="print" class="text-3xl mx-auto text-red-500">Do not even try</div>
+<div id="no-print" class="container flex flex-col mx-auto h-screen">
     <div class="flex-1 flex flex-col">
         <h2 class="text-3xl font-bold text-center">Let's start to compare pdfs</h2>
         <div class="py-1">
@@ -94,6 +96,10 @@
 
         function twoDigitNumber(number) {
             return ("0" + number).slice(-2);
+        }
+
+        window.onbeforeprint = function(event) {
+            alert('Print is not allowed');
         }
     };
 </script>
