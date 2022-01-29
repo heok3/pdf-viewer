@@ -13,13 +13,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::namespace('App\Http\Infrastructure\Support\WebPage')
+Route::namespace('App\Http\Infrastructure\PdfFile\WebPage')
     ->group(function () {
-        Route::get('/', 'HomeController');
-    });
-
-Route::namespace('App\Http\Infrastructure\PdfFile\API')
-    ->prefix('api')
-    ->group(function () {
-        Route::get('/pdfs', 'PdfFileController@index');
+        Route::redirect('/pdfs', '/');
+        Route::redirect('/home', '/');
+        Route::get('/', 'PdfFileController@index')->name('home');
+        Route::post('/pdfs', 'PdfFileController@store');
     });

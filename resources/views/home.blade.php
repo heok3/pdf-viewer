@@ -6,7 +6,7 @@
 
     {{--        <link href="/css/app.css" rel="stylesheet">--}}
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>Pdf multi view</title>
+    <title>Pdf multiple view</title>
 
     <style>
         #print { display: none; }
@@ -46,15 +46,28 @@
                             form="form_open"
                             class="border-2 p-1 hover:bg-gray-200 hover:cursor-pointer"
                         > OPEN</button>
-                        <form id="form_upload" method="POST" action="/todo" class="hidden">
-                            <input type="file" name="pdf_file" required accept="application/pdf"/>
+                        <form
+                            id="form_upload"
+                            method="POST"
+                            action="/pdfs"
+                            class="hidden"
+                            enctype="multipart/form-data"
+                        >
+                            @csrf
+                            <input
+                                id="upload_file"
+                                type="file"
+                                name="pdf_file"
+                                required
+                                accept="application/pdf"
+                            />
                         </form>
-                        <button
+                        <label
                             id="upload"
-                            type="submit"
-                            form="form_upload"
+                            for="upload_file"
+                            type="button"
                             class="border-2 p-1 hover:bg-gray-200 hover:cursor-pointer"
-                        > UPLOAD</button>
+                        > UPLOAD</label>
                     </div>
                 </div>
                 <div class="flex flex-col flex-1">
@@ -129,6 +142,10 @@
         window.onbeforeprint = function(event) {
             alert('Print is not allowed');
         }
+
+        document.getElementById('upload_file').addEventListener('change', function (event) {
+            document.getElementById('form_upload').submit();
+        });
     };
 </script>
 </body>
