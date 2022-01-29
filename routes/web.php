@@ -20,3 +20,9 @@ Route::namespace('App\Http\Infrastructure\PdfFile\WebPage')
         Route::get('/', 'PdfFileController@index')->name('home');
         Route::post('/pdfs', 'PdfFileController@store');
     });
+
+Route::namespace('App\Http\Infrastructure\Note\API')
+    ->group(function () {
+        Route::get('/note', 'NoteController@index');
+        Route::post('/note', 'NoteController@store');
+    });

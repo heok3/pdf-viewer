@@ -3,10 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     {{--        <link href="/css/app.css" rel="stylesheet">--}}
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>Pdf multiple view</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>    <title>Pdf multiple view</title>
 
     <style>
         #print { display: none; }
@@ -61,7 +62,7 @@
                                 required
                                 accept="application/pdf"
                             />
-                        </form>
+                       </form>
                         <label
                             id="upload"
                             for="upload_file"
@@ -92,15 +93,18 @@
     </div>
     <div class="flex flex-col">
         <div class="flex grow border-2">
-            <textarea class="w-full h-full resize-none p-2" placeholder="Write here..."></textarea>
+            <textarea id="note" class="w-full h-full resize-none p-2" placeholder="Write here..."></textarea>
         </div>
         <div class="text-center">
-            <button type="button" class="border-2 py-1 px-4">Save</button>
+            <button id="save_note" type="button" class="border-2 py-1 px-4">Save</button>
         </div>
     </div>
 </div>
 <script>
-    window.onload = function () {
+    $(document).ready(function () {
+        const fileIds = {{ Illuminate\Support\Js::from($selectedPdfIds) }};
+        loadNote();
+
         const now = new Date();
         const DURATION_HOUR = 1;
         const INTERVAL_MS = 1000;
@@ -118,7 +122,7 @@
         let clock = setInterval(timer, INTERVAL_MS);
 
         function timer() {
-            document.getElementById('timer').innerHTML = getRemainingTimeString(endedAt);
+            $('#timer').text(getRemainingTimeString(endedAt));
         }
 
         function getRemainingTimeString(endedAt) {
@@ -143,10 +147,56 @@
             alert('Print is not allowed');
         }
 
-        document.getElementById('upload_file').addEventListener('change', function (event) {
-            document.getElementById('form_upload').submit();
-        });
-    };
+        $('#upload_file').change(function (event) {
+            $('#form_upload').submit();
+        })
+
+        $('#save_note').click(function (event) {
+            const url = '/note';
+            const note = $('#note').val();
+            const data = {
+                text: note,
+                file_ids: fileIds,
+            };
+
+            if (Array.isArray(fileIds) && fileIds.length === 0) {
+                alert('Open some files first!');
+                return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: url,
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            }).fail(function (res) {
+                alert('Cannot save your note. Contact me.');
+            });
+        })
+
+        function loadNote() {
+            let url = '/note';
+            let data = {
+                pdf_files: fileIds
+            };
+            $.ajax({
+                type: 'GET',
+                url: url,
+                data: data,
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            }).done(function(payload) {
+                $('#note').val(payload.note);
+            }).fail(function (res) {
+                alert('Cannot load your note. Contact me.');
+            });
+        }
+    });
 </script>
 </body>
 </html>
