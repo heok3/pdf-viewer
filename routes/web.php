@@ -22,6 +22,7 @@ Route::namespace('App\Http\Infrastructure\PdfFile\WebPage')
     });
 
 Route::namespace('App\Http\Infrastructure\Note\API')
+    ->prefix('api')
     ->group(function () {
         Route::get('/note', 'NoteController@index');
         Route::post('/note', 'NoteController@store');

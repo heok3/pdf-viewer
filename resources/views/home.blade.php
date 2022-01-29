@@ -152,7 +152,7 @@
         })
 
         $('#save_note').click(function (event) {
-            const url = '/note';
+            const url = '/api/note';
             const note = $('#note').val();
             const data = {
                 text: note,
@@ -178,7 +178,7 @@
         })
 
         function loadNote() {
-            let url = '/note';
+            let url = '/api/note';
             let data = {
                 pdf_files: fileIds
             };
