@@ -3,8 +3,8 @@
 namespace App\Http\Infrastructure\PdfFile\WebPage;
 
 use App\Http\Application\PdfFile\ListPdfFile;
+use App\Http\Application\PdfFile\PdfFileExtensionException;
 use App\Http\Application\PdfFile\StorePdfFile;
-use App\Http\Domain\PdfFile\PdfFileExtensionException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\RedirectResponse;

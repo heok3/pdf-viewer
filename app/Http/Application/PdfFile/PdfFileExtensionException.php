@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Domain\PdfFile;
+namespace App\Http\Application\PdfFile;
 
 use Exception;
 

@@ -2,7 +2,6 @@
 
 namespace App\Http\Application\PdfFile;
 
-use App\Http\Domain\PdfFile\PdfFileExtensionException;
 use App\Models\PdfFile;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
